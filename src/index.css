@@ -1,3 +1,122 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply transition-colors duration-700 overflow-x-hidden m-0 p-0 antialiased text-sm;
+    background-attachment: fixed;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 188, 212, 0.2) transparent;
+  }
+
+  /* Global Unified Modern Scrollbar - Strictly No Arrows */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-alkaline-500/15 dark:bg-white/5 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-alkaline-500/30 dark:bg-white/10;
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none !important;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .glass-container {
+    @apply backdrop-blur-[40px] bg-white/50 dark:bg-black/40 border border-white/40 dark:border-white/10 rounded-[2.5rem] transition-all duration-700 mx-auto;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-[25px] bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/10 rounded-[2rem] transition-all duration-300 mx-auto;
+  }
+  
+  .glass-button {
+    @apply backdrop-blur-lg bg-white/60 dark:bg-white/10 hover:bg-alkaline-500 hover:text-white dark:hover:bg-alkaline-600 border border-white/80 dark:border-white/10 rounded-full transition-all active:scale-95 duration-300 shadow-sm px-6 h-12 flex items-center justify-center text-xs font-bold uppercase tracking-widest;
+  }
+
+  .liquid-input {
+    @apply bg-white/40 dark:bg-black/50 border border-white/60 dark:border-white/10 rounded-full h-12 px-6 focus:border-alkaline-500 focus:ring-4 focus:ring-alkaline-500/10 outline-none transition-all duration-500 text-right text-neutral-800 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 text-xs font-bold;
+  }
+
+  .alkaline-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-alkaline-600 via-aqua-500 to-alkaline-400 dark:from-alkaline-400 dark:via-aqua-400 dark:to-alkaline-200 font-black;
+  }
+
+  .alkaline-gradient {
+    @apply bg-gradient-to-br from-alkaline-400 via-aqua-500 to-alkaline-600;
+  }
+
+  /* Norman Window Logic */
+  .norman-item-top { @apply rounded-t-[1.5rem] rounded-b-none; }
+  .norman-item-mid { @apply rounded-none; }
+  .norman-item-bot { @apply rounded-b-[1.5rem] rounded-t-none; }
+  .norman-item-single { @apply rounded-[1.5rem]; }
+
+  /* Creative Pause State: Suspended Animation */
+  .suspended-animation {
+    @apply grayscale-[0.8] opacity-40 scale-[0.98] transition-all duration-1000;
+    pointer-events: none;
+  }
+}
+
+/* Unified Modern Nested Scrollbar - No Arrows, Strictly Inset */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 188, 212, 0.2) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 0.75rem; /* Insets the scrollbar thumb further inside the container */
+  margin-bottom: 0.75rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-alkaline-500/15 dark:bg-white/5 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-alkaline-500/30 dark:bg-white/10;
+}
+
+/* Force hide any arrows/buttons */
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  height: 0;
+  width: 0;
+}
+
+@keyframes liquid-float {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-liquid-bg {
+  animation: liquid-float 20s ease-in-out infinite;
+}
