@@ -1,4 +1,4 @@
-# Hydrail: Setup & Installation
+# Hydraline City: Setup & Installation
 
 To run this simulation, you need to set up the local AI environment. Follow these simple steps.
 
