@@ -384,6 +384,10 @@ const HydralineCityApp = () => {
     const saved = localStorage.getItem('Hydraline City_game_state');
     return saved ? JSON.parse(saved).totalDrunk : 0;
   });
+  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'assistant', content: string}[]>(() => {
+    const saved = localStorage.getItem('Hydraline City_game_state');
+    return saved ? (JSON.parse(saved).chatHistory || []) : [];
+  });
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -392,6 +396,18 @@ const HydralineCityApp = () => {
   const [tutorialActive, setTutorialActive] = useState(false);
   const [isFirstTimeTutorial, setIsFirstTimeTutorial] = useState(false);
   const [tutStep, setTutStep] = useState(0);
+
+  // AI Planner States
+  const [userPrompt, setUserPrompt] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory, isAiLoading]);
 
   const tutorialGoals = [
     { id: 'tut-collect', text: "Collect water in primary hydroflask.", targetId: 'btn-collect' },
@@ -526,9 +542,9 @@ const HydralineCityApp = () => {
 
   useEffect(() => {
     if (step === 2 && !tutorialActive) {
-      localStorage.setItem('Hydraline City_game_state', JSON.stringify({ replicaFlask, assetFlasks, faucetLevel, zones, totalDrunk, integrity }));
+      localStorage.setItem('Hydraline City_game_state', JSON.stringify({ replicaFlask, assetFlasks, faucetLevel, zones, totalDrunk, integrity, chatHistory }));
     }
-  }, [replicaFlask, assetFlasks, faucetLevel, zones, totalDrunk, integrity, step, tutorialActive]);
+  }, [replicaFlask, assetFlasks, faucetLevel, zones, totalDrunk, integrity, chatHistory, step, tutorialActive]);
 
   const showNotify = (msg: string) => {
     setNotification(msg);
@@ -747,6 +763,53 @@ const HydralineCityApp = () => {
       }
     } else {
       showNotify(`Auth error: Grid req`);
+    }
+  };
+
+  const askCityPlanner = async () => {
+    if (!userPrompt.trim()) return;
+    const promptText = userPrompt.trim();
+    setIsAiLoading(true);
+    setUserPrompt('');
+    
+    // Construct the context-grounded prompt
+    const contextPrompt = `
+      You are the Hydraline City Planner AI. You provide health coaching and city strategy.
+      Current Game State:
+      - Hydration Bank (Total Drunk): ${formatVolume(totalDrunk)}
+      - Primary Vessel: ${FLASK_NAMES[replicaFlask.typeIndex]} (${formatVolume(replicaFlask.current)} / ${formatVolume(FLASK_CAPS[replicaFlask.typeIndex] * 1000)})
+      - City Zones: Residential ${zones.residential}, Commercial ${zones.commercial}, Industrial ${zones.industrial}
+      - Vitality Engine Level: ${FAUCET_NAMES[faucetLevel]}
+      - Integrity Stability: ${integrity.toFixed(1)}%
+      
+      User Question: "${promptText}"
+      
+      Instructions: Respond in 2-3 sentences. Be encouraging and reference the specific numbers above. Do not use colons in your response for formality.
+    `;
+
+    try {
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gemma:2b',
+          prompt: contextPrompt,
+          stream: false
+        })
+      });
+      const data = await response.json();
+      const newHistory: {role: 'user' | 'assistant', content: string}[] = [
+        ...chatHistory,
+        { role: 'user', content: promptText },
+        { role: 'assistant', content: data.response }
+      ];
+      setChatHistory(newHistory);
+      setAiResponse(data.response);
+    } catch (error) {
+      console.error('Ollama connection error:', error);
+      setAiResponse("Signal interrupted. Please ensure the local AI bridge (Ollama) is active and CORS is configured.");
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -1143,6 +1206,75 @@ const HydralineCityApp = () => {
                   })}
                 </div>
               </section>
+            </div>
+
+            <div className={`glass-container p-12 border-white/20 mb-10 w-full flex flex-col transition-all ${showSettings || showShop ? 'shadow-none opacity-20 scale-95 blur-xl' : 'shadow-2xl scale-100 opacity-100'} max-w-5xl`}>
+              <div className="flex justify-between items-center mb-10 border-b border-white/10 pb-10 w-full">
+                <h3 className="text-xs font-black text-neutral-400 capitalize tracking-[0.2em] opacity-40 leading-none">City Planner AI</h3>
+                <div className="flex items-center gap-6">
+                  <span className="text-[10px] text-alkaline-600 dark:text-alkaline-400 font-black capitalize tracking-[0.2em] bg-alkaline-500/10 px-8 py-4 rounded-full border border-alkaline-500/30 shadow-inner">
+                    Gemma 4 Local Inference
+                  </span>
+                  <div className={`w-2 h-2 rounded-full animate-pulse shadow-lg ${isAiLoading ? 'bg-yellow-500 shadow-yellow-500/50' : 'bg-alkaline-500 shadow-alkaline-500/50'}`}></div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-6">
+                <div className="glass-card p-8 bg-white/5 border-white/10 h-[400px] flex flex-col overflow-hidden">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-4 mb-4">
+                    {chatHistory.length === 0 && !isAiLoading && (
+                      <div className="h-full flex flex-col items-center justify-center opacity-20 text-center px-10">
+                        <p className="text-xs font-black capitalize tracking-[0.2em] mb-2">Intelligence Stream Ready</p>
+                        <p className="text-[10px] font-bold leading-relaxed italic">Consult the City Planner for metabolic analysis and urban growth protocols.</p>
+                      </div>
+                    )}
+                    
+                    {chatHistory.map((chat, idx) => (
+                      <div key={idx} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+                        <div className={`max-w-[85%] p-5 rounded-[2rem] text-[11px] font-black leading-relaxed shadow-2xl transition-all border ${
+                          chat.role === 'user' 
+                            ? 'alkaline-gradient text-white border-white/30 rounded-br-none' 
+                            : 'bg-white/10 dark:bg-black/40 border-white/10 text-neutral-800 dark:text-neutral-200 rounded-bl-none backdrop-blur-xl'
+                        }`}>
+                          {chat.content}
+                        </div>
+                      </div>
+                    ))}
+
+                    {isAiLoading && (
+                      <div className="flex justify-start animate-in fade-in slide-in-from-left-4 duration-500">
+                        <div className="bg-white/10 dark:bg-black/40 border border-white/10 p-5 rounded-[2rem] rounded-bl-none backdrop-blur-xl shadow-xl">
+                          <div className="flex gap-2 items-center h-4 px-2">
+                            <div className="w-1.5 h-1.5 bg-alkaline-500 rounded-full animate-bounce [animation-duration:800ms]"></div>
+                            <div className="w-1.5 h-1.5 bg-alkaline-500 rounded-full animate-bounce [animation-duration:800ms] [animation-delay:200ms]"></div>
+                            <div className="w-1.5 h-1.5 bg-alkaline-500 rounded-full animate-bounce [animation-duration:800ms] [animation-delay:400ms]"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                </div>
+                
+                <div className="relative group">
+                  <input
+                    type="text"
+                    value={userPrompt}
+                    onChange={(e) => setUserPrompt(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && askCityPlanner()}
+                    placeholder="Input metropolitan query..."
+                    className="liquid-input w-full !text-left pr-36 h-14 !rounded-full shadow-inner"
+                    disabled={isAiLoading}
+                  />
+                  <button
+                    onClick={askCityPlanner}
+                    disabled={isAiLoading || !userPrompt.trim()}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 h-10 px-8 rounded-full font-black text-[10px] capitalize tracking-widest transition-all ${isAiLoading || !userPrompt.trim() ? 'bg-neutral-200 dark:bg-white/5 text-neutral-400 opacity-20' : 'alkaline-gradient text-white shadow-lg hover:scale-105 active:scale-95'}`}
+                  >
+                    {isAiLoading ? "Processing" : "Transmit"}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className={`glass-container p-12 border-white/20 mb-10 w-full flex flex-col transition-all ${showSettings || showShop ? 'shadow-none opacity-20 scale-95 blur-xl' : 'shadow-2xl scale-100 opacity-100'} max-w-5xl`}>
