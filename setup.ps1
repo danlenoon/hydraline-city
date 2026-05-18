@@ -9,8 +9,8 @@ if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
 Write-Host "CORS settings updated. Please restart Ollama." -ForegroundColor Green
 
 # Pull Model
-Write-Host "Pulling AI model..." -ForegroundColor Yellow
-ollama pull gemma:2b
+Write-Host "Pulling Gemma 4 AI model..." -ForegroundColor Yellow
+ollama pull gemma4:2b
 
 # Install Node modules
 Write-Host "Installing dependencies..." -ForegroundColor Yellow

@@ -792,7 +792,7 @@ const HydralineCityApp = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'gemma:2b',
+          model: 'gemma4:2b',
           prompt: contextPrompt,
           stream: false
         })

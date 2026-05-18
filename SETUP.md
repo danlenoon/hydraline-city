@@ -1,6 +1,6 @@
-# 🛠️ Hydraline: Setup & Installation
+# 🛠️ Hydraline City: Setup & Installation
 
-Follow these steps to get the Hydraline development environment running on your local machine. This project utilizes **Ollama** for a persistent, local-first AI intelligence stream to ensure user privacy and offline functionality.
+Follow these steps to get the Hydraline City development environment running on your local machine. This project utilizes **Ollama** for a persistent, local-first AI intelligence stream to ensure user privacy and offline functionality.
 
 ## 📦 Prerequisites
 
